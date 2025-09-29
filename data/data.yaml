@@ -1,0 +1,20 @@
+# Número de clases
+nc: 15
+
+# Nombres de las clases (en orden de 0 a 14)
+names:
+  - AKIEC
+  - ANT_BITE
+  - BCC
+  - BEDBUG_BITE
+  - BKL
+  - CHIGGER_BITE
+  - DF
+  - FLEAS_BITE
+  - MEL
+  - MOSQUITO_BITE
+  - NV
+  - SCC
+  - SPIDER_BITE
+  - TICKS_BITE
+  - VASC
