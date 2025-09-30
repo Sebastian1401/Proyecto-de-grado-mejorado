@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import yaml
-from rknn.api import RKNNLite
+from rknn.api import RKNN
 
 # --- CONFIGURACIÓN ---
 RKNN_MODEL = './weights/model1.rknn'
@@ -66,7 +66,7 @@ if __name__ == '__main__':
         exit()
 
     # 3. Iniciar el entorno del NPU
-    rknn_lite = RKNNLite(verbose=False)
+    rknn_lite = RKNN(verbose=False)
     print(f"--> Cargando modelo RKNN: {RKNN_MODEL}")
     ret = rknn_lite.load_rknn(RKNN_MODEL)
     if ret != 0:
@@ -74,7 +74,7 @@ if __name__ == '__main__':
         exit()
 
     print("--> Inicializando el entorno de ejecución del NPU...")
-    ret = rknn_lite.init_runtime(core_mask=RKNNLite.NPU_CORE_0_1_2)
+    ret = rknn_lite.init_runtime(core_mask=RKNN.NPU_CORE_0_1_2)
     if ret != 0:
         print("❌ ERROR: Fallo al inicializar el entorno del NPU")
         exit()
