@@ -74,7 +74,7 @@ if __name__ == '__main__':
         exit()
 
     print("--> Inicializando el entorno de ejecución del NPU...")
-    ret = rknn_lite.init_runtime(core_mask=RKNN.NPU_CORE_0_1_2)
+    ret = rknn_lite.init_runtime()
     if ret != 0:
         print("❌ ERROR: Fallo al inicializar el entorno del NPU")
         exit()
