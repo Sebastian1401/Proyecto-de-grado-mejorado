@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import yaml
-from rknn.api import RKNN
+from rknnlite.api import RKNNLite   # <-- CAMBIO: usar Lite
 
 # --- CONFIGURACIÓN ---
 RKNN_MODEL = './weights/model1.rknn'
@@ -22,26 +22,40 @@ def postprocess(outputs, conf_threshold=0.25, iou_threshold=0.45):
             box[..., 0] -= box[..., 2] / 2
             box[..., 1] -= box[..., 3] / 2
 
-            # Filtra por confianza
             conf = o[..., 4]
             idx = conf > conf_threshold
             box, conf, o = box[idx], conf[idx], o[idx]
 
-            # Obtiene la clase con mayor puntuación
             cls = np.argmax(o[..., 5:], axis=1)
 
             boxes.append(box)
             confs.append(conf)
             clss.append(cls)
 
+    if len(boxes) == 0:
+        return np.array([]), np.array([]), np.array([])
+
     boxes = np.concatenate(boxes)
     confs = np.concatenate(confs)
     clss = np.concatenate(clss)
 
-    # Non-Maximum Suppression (NMS)
-    indices = cv2.dnn.NMSBoxes(boxes.tolist(), confs.tolist(), conf_threshold, iou_threshold)
+    # cv2.dnn.NMSBoxes espera [x, y, w, h] y valores int
+    boxes_xywh = boxes.copy()
+    boxes_xywh[:, 2:4] = boxes_xywh[:, 2:4]  # ya son w,h
+    boxes_int = boxes_xywh.astype(np.int32).tolist()
+    confs_list = confs.astype(float).tolist()
 
-    return boxes[indices], confs[indices], clss[indices]
+    indices = cv2.dnn.NMSBoxes(boxes_int, confs_list, conf_threshold, iou_threshold)
+    if len(indices) == 0:
+        return np.array([]), np.array([]), np.array([])
+
+    # indices puede ser lista de listas; aplanamos
+    if isinstance(indices, np.ndarray):
+        idxs = indices.flatten()
+    else:
+        idxs = [i[0] if isinstance(i, (list, tuple)) else i for i in indices]
+
+    return boxes[idxs], confs[idxs], clss[idxs]
 
 if __name__ == '__main__':
     print("--- Iniciando prueba del modelo en NPU ---")
@@ -53,36 +67,45 @@ if __name__ == '__main__':
         print(f"✅ Nombres de clases cargados: {len(class_names)} clases")
     except Exception as e:
         print(f"❌ ERROR al cargar '{DATA_YAML_PATH}': {e}")
-        exit()
+        exit(1)
 
     # 2. Cargar imagen y pre-procesarla
     try:
         img_orig = cv2.imread(IMAGE_PATH)
+        if img_orig is None:
+            raise FileNotFoundError(f"No se pudo leer la imagen en {IMAGE_PATH}")
         img = cv2.cvtColor(img_orig, cv2.COLOR_BGR2RGB)
-        img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
+        img = cv2.resize(img, (IMG_SIZE, IMG_SIZE), interpolation=cv2.INTER_LINEAR)
+
+        # RKNN Lite normalmente espera NHWC uint8; añadimos batch
+        img_input = img.astype(np.uint8)
+        img_input = np.expand_dims(img_input, axis=0)  # [1, H, W, 3]
+
         print("✅ Imagen de prueba cargada y pre-procesada.")
     except Exception as e:
         print(f"❌ ERROR al cargar la imagen '{IMAGE_PATH}': {e}")
-        exit()
+        exit(1)
 
-    # 3. Iniciar el entorno del NPU
-    rknn_lite = RKNN(verbose=False)
+    # 3. Iniciar el entorno del NPU con RKNNLite
+    rknn = RKNNLite(verbose=True)
     print(f"--> Cargando modelo RKNN: {RKNN_MODEL}")
-    ret = rknn_lite.load_rknn(RKNN_MODEL)
+    ret = rknn.load_rknn(RKNN_MODEL)
     if ret != 0:
         print("❌ ERROR: Fallo al cargar el modelo .rknn")
-        exit()
+        rknn.release()
+        exit(1)
 
     print("--> Inicializando el entorno de ejecución del NPU...")
-    ret = rknn_lite.init_runtime()
+    ret = rknn.init_runtime()
     if ret != 0:
         print("❌ ERROR: Fallo al inicializar el entorno del NPU")
-        exit()
+        rknn.release()
+        exit(1)
     print("✅ Entorno del NPU listo.")
 
     # 4. Realizar la inferencia
     print("\n--- Realizando inferencia en el NPU... ---")
-    outputs = rknn_lite.inference(inputs=[img])
+    outputs = rknn.inference(inputs=[img_input])
 
     # 5. Post-procesar y mostrar los resultados
     boxes, confs, clss = postprocess(outputs)
@@ -92,8 +115,8 @@ if __name__ == '__main__':
         print("\n--- DETALLES DE LAS DETECCIONES ---")
         for box, conf, cls in zip(boxes, confs, clss):
             class_name = class_names[int(cls)]
-            print(f"  - Clase: '{class_name}', Confianza: {conf:.2f}")
+            print(f"  - Clase: '{class_name}', Confianza: {float(conf):.2f}")
 
     # 6. Liberar recursos
-    rknn_lite.release()
+    rknn.release()
     print("\n--- Prueba finalizada ---")
