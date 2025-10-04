@@ -224,6 +224,60 @@ def toggle_predictions():
     print(f"DEBUG: El estado de 'predictions_enabled' ahora es: {predictions_enabled}")
     return "Estado de predicciones actualizado"
 
+# === Perillas RKNN: get/set ===
+@app.route('/thresholds', methods=['GET'])
+def get_thresholds():
+    """Devuelve los umbrales actuales del postproceso RKNN."""
+    return jsonify(rknn_model.get_thresholds())
+
+@app.route('/thresholds', methods=['POST'])
+def set_thresholds():
+    """
+    Actualiza una o varias perillas:
+    body JSON: { "conf_th": 0.6, "iou_th": 0.3, "min_box_frac": 0.003 }
+        - conf_th e iou_th en [0,1]
+        - min_box_frac en (0, 0.5]
+    """
+    data = request.get_json(force=True, silent=True) or {}
+
+    def to_float(x):
+        try:
+            return float(x)
+        except Exception:
+            return None
+
+    updates = {}
+    if 'conf_th' in data:
+        v = to_float(data['conf_th'])
+        if v is None or not (0.0 <= v <= 1.0):
+            return jsonify({"error": "conf_th debe estar en [0,1]"}), 400
+        updates['conf_th'] = v
+
+    if 'iou_th' in data:
+        v = to_float(data['iou_th'])
+        if v is None or not (0.0 <= v <= 1.0):
+            return jsonify({"error": "iou_th debe estar en [0,1]"}), 400
+        updates['iou_th'] = v
+
+    if 'min_box_frac' in data:
+        v = to_float(data['min_box_frac'])
+        if v is None or not (0.0 < v <= 0.5):
+            return jsonify({"error": "min_box_frac debe estar en (0, 0.5]"}), 400
+        updates['min_box_frac'] = v
+
+    if not updates:
+        return jsonify({"error": "sin campos válidos (conf_th, iou_th, min_box_frac)"}), 400
+
+    rknn_model.set_thresholds(**updates)
+    return jsonify({"ok": True, "thresholds": rknn_model.get_thresholds()})
+
+@app.route('/thresholds/reset', methods=['POST'])
+def reset_thresholds():
+    """Restaura valores por defecto usados en utils/rknn_infer.py"""
+    rknn_model.set_thresholds(conf_th=0.60, iou_th=0.30, min_box_frac=0.003)
+    return jsonify({"ok": True, "thresholds": rknn_model.get_thresholds()})
+
+
 @app.route('/download/<cedula>', methods=['GET'])
 def download_data(cedula):
     print(f"DEBUG: Iniciando descarga para cédula {cedula}")

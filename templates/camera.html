@@ -448,6 +448,37 @@
                     <span class="slider"></span>
                 </label>
             </div>
+
+            <!-- === Perillas RKNN === -->
+            <div id="rknn-knobs" style="width:100%; display:flex; flex-direction:column; gap:16px;">
+                <div style="font-weight:600; color:#2c3e50; text-align:center;">Ajustes de detección</div>
+
+                <label style="display:flex; align-items:center; gap:10px; justify-content:space-between;">
+                    <span style="min-width:160px;">Confianza (conf_th)</span>
+                    <input id="conf_th" type="range" min="0" max="1" step="0.01" value="0.60" style="flex:1;">
+                    <span id="conf_th_val" style="width:56px; text-align:right;">0.60</span>
+                </label>
+
+                <label style="display:flex; align-items:center; gap:10px; justify-content:space-between;">
+                    <span style="min-width:160px;">IoU NMS (iou_th)</span>
+                    <input id="iou_th" type="range" min="0" max="1" step="0.01" value="0.30" style="flex:1;">
+                    <span id="iou_th_val" style="width:56px; text-align:right;">0.30</span>
+                </label>
+
+                <label style="display:flex; align-items:center; gap:10px; justify-content:space-between;">
+                    <span style="min-width:160px;">Tamaño mínimo caja</span>
+                    <input id="min_box_frac" type="range" min="0.001" max="0.02" step="0.001" value="0.003" style="flex:1;">
+                    <span id="min_box_frac_val" style="width:56px; text-align:right;">0.003</span>
+                </label>
+
+                <div class="button-group" style="margin-top:4px;">
+                    <button type="button" id="resetKnobs" class="action-btn secondary">
+                    <i class="fas fa-rotate-left"></i><span>Restaurar</span>
+                    </button>
+                </div>
+            </div>
+            <!-- === /Perillas RKNN === -->
+
             <div class="button-group">
                 <button type="button" id="captureButton" class="action-btn success"><i
                         class="fas fa-camera"></i><span>Capturar Imagen</span></button>
@@ -611,6 +642,76 @@
             $('#predictionSwitch').change(function () {
                 $.post("{{ url_for('toggle_predictions') }}", { enabled: this.checked });
             });
+
+            // === Perillas RKNN (front) ===
+            function setLabel(id, v) { $(`#${id}_val`).text(Number(v).toFixed(3).replace(/0+$/,'').replace(/\.$/,'.0')); }
+            function setInput(id, v) { $(`#${id}`).val(v); setLabel(id, v); }
+
+            // Cargar valores actuales desde la API
+            function fetchThresholds() {
+            $.getJSON('/thresholds')
+                .done(th => {
+                if (typeof th.conf_th === 'number') setInput('conf_th', th.conf_th);
+                if (typeof th.iou_th === 'number') setInput('iou_th', th.iou_th);
+                if (typeof th.min_box_frac === 'number') setInput('min_box_frac', th.min_box_frac);
+                })
+                .fail(() => showNotification('No se pudieron cargar las perillas', 'error'));
+            }
+
+            // Debounce para no spamear el backend al mover sliders
+            let knobsTimer = null;
+            function pushThresholds(payload) {
+            clearTimeout(knobsTimer);
+            knobsTimer = setTimeout(() => {
+                $.ajax({
+                url: '/thresholds',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload)
+                })
+                .done(res => {
+                // opcional: showNotification('Ajustes aplicados', 'success');
+                })
+                .fail(() => showNotification('Error al aplicar ajustes', 'error'));
+            }, 150);
+            }
+
+            // Handlers de cambio (envían sólo el campo modificado)
+            $('#conf_th').on('input change', function() {
+            setLabel('conf_th', this.value);
+            pushThresholds({ conf_th: parseFloat(this.value) });
+            });
+            $('#iou_th').on('input change', function() {
+            setLabel('iou_th', this.value);
+            pushThresholds({ iou_th: parseFloat(this.value) });
+            });
+            $('#min_box_frac').on('input change', function() {
+            setLabel('min_box_frac', this.value);
+            pushThresholds({ min_box_frac: parseFloat(this.value) });
+            });
+
+            // Reset a valores por defecto del backend
+            $('#resetKnobs').on('click', function() {
+            const btn = $(this), icon = btn.find('i').attr('class');
+            setButtonLoading(btn, true);
+            $.post('/thresholds/reset')
+                .done(res => {
+                setInput('conf_th', res.thresholds.conf_th);
+                setInput('iou_th', res.thresholds.iou_th);
+                setInput('min_box_frac', res.thresholds.min_box_frac);
+                showNotification('Perillas restauradas', 'success');
+                })
+                .fail(() => showNotification('No se pudo restaurar', 'error'))
+                .always(() => {
+                setButtonLoading(btn, false);
+                btn.find('i').removeClass().addClass(icon);
+                });
+            });
+
+            // Inicializa perillas al cargar
+            fetchThresholds();
+            // === /Perillas RKNN ===
+
 
             // Tu código de showNotification y setButtonLoading
             function showNotification(message, type = 'success') {
