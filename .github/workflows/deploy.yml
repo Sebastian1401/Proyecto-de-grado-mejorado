@@ -1,0 +1,23 @@
+name: Deploy to Orange Pi (self-hosted)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout (for context/logs)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Pull & restart service
+        run: |
+          set -e
+          cd /home/apidetector/proyectos/Proyecto-de-grado-mejorado
+          git fetch --all
+          git reset --hard origin/main
+          /home/apidetector/bin/deploy_skinapp.sh
