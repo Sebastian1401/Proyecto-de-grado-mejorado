@@ -14,114 +14,68 @@ IMG_SIZE = 640
 def sigmoid(x):
     return 1.0 / (1.0 + np.exp(-x))
 
-def postprocess(outputs, img_size=640, conf_threshold=0.25, iou_threshold=0.45, nms_topk=300):
-    """
-    Espera outputs = [array] con shape (1,25200,20) o (25200,20)
-    Layout esperado (más común): [x, y, w, h, obj, c0..c14] (20 cols)
-    Se auto-ajusta si:
-    - x,y,w,h ya están en píxeles (max>1.5) o en [0..1]
-    - obj/clases requieren sigmoide (max>1) o ya están en [0..1]
-    Devuelve: boxes_xyxy (N,4), scores (N,), cls_ids (N,)
-    """
-    pred = outputs[0]
-    if pred.ndim == 3:
-        pred = pred[0]  # (25200, 20)
-    pred = pred.astype(np.float32)
-
-    # Debug rápido de columnas
-    col_max = pred.max(axis=0)
-    col_min = pred.min(axis=0)
-    print(f"[PP] col0..3(xywh) min/max: {col_min[:4]} / {col_max[:4]}")
-    print(f"[PP] col4(obj) min/max: {col_min[4]:.4f} / {col_max[4]:.4f}")
-    print(f"[PP] col5..19(cls) max: {col_max[5:20]} (max_global={col_max[5:20].max():.4f})")
-
+def postprocess(outputs, img_size=640, conf_threshold=0.55, iou_threshold=0.30, nms_topk=300, min_box_frac=0.002):
+    ...
     xywh = pred[:, 0:4].copy()
     obj  = pred[:, 4].copy()
-    cls  = pred[:, 5:].copy()  # (25200, 15)
+    cls  = pred[:, 5:].copy()
 
-    # ¿Las clases/obj requieren sigmoide?
-    need_sigmoid_obj = np.nanmax(obj) > 1.0 or np.nanmin(obj) < 0.0
-    need_sigmoid_cls = np.nanmax(cls) > 1.0 or np.nanmin(cls) < 0.0
+    # Sigmoides si hiciera falta
+    if np.nanmax(obj) > 1.0 or np.nanmin(obj) < 0.0:
+        obj = 1/(1+np.exp(-obj))
+    if np.nanmax(cls) > 1.0 or np.nanmin(cls) < 0.0:
+        cls = 1/(1+np.exp(-cls))
 
-    if need_sigmoid_obj:
-        obj = sigmoid(obj)
-    if need_sigmoid_cls:
-        cls = sigmoid(cls)
+    # Escala a píxeles si viene en [0..1]
+    if np.max(xywh) <= 1.5:
+        xywh *= float(img_size)
 
-    # En algunos exports NO hay obj real (la col4 es otra cosa o ~1 constante).
-    # Si el percentil 95 de 'obj' es muy bajo (<0.2) pero las clases tienen valores decentes,
-    # probamos puntuar solo con clases.
-    use_obj = True
-    if np.percentile(obj, 95) < 0.2 and np.percentile(cls.max(axis=1), 95) > 0.2:
-        use_obj = False
-        print("[PP] Aviso: 'obj' parece no ser usable; se usará solo confianza de clase.")
+    # Clase top y score SIEMPRE con obj
+    cls_ids  = np.argmax(cls, axis=1)
+    cls_conf = cls[np.arange(cls.shape[0]), cls_ids]
+    scores   = obj * cls_conf
 
-    # ¿xywh en píxeles o relativos?
-    if np.max(xywh[:,:4]) > 1.5:  # parecen píxeles 0..640
-        scale = 1.0
-    else:
-        scale = float(img_size)
-        xywh *= scale
-
-    # Mejor clase y score
-    cls_ids  = np.argmax(cls, axis=1)                # (25200,)
-    cls_conf = cls[np.arange(cls.shape[0]), cls_ids] # (25200,)
-    scores = cls_conf if not use_obj else (obj * cls_conf)
-
-    # Filtro por umbral (arranca bajo y sube luego si hace falta)
+    # Filtrado inicial por confianza
     keep = scores >= conf_threshold
     if not np.any(keep):
-        # intenta bajar umbral si todo quedó en 0 porque obj era pequeño
-        fallback = (cls_conf >= max(0.05, conf_threshold * 0.5))
-        if np.any(fallback):
-            print("[PP] Reintento: usando solo confianza de clase con umbral más bajo.")
-            scores = cls_conf
-            keep = fallback
-        else:
-            return (np.empty((0,4), np.float32),
-                    np.empty((0,), np.float32),
-                    np.empty((0,), np.int32))
+        return (np.empty((0,4), np.float32),
+                np.empty((0,), np.float32),
+                np.empty((0,), np.int32))
+    xywh, scores, cls_ids = xywh[keep], scores[keep], cls_ids[keep]
 
-    xywh = xywh[keep]
-    scores = scores[keep]
-    cls_ids = cls_ids[keep]
-
-    # xywh centro → xyxy
+    # xywh -> xyxy
     x_c, y_c, w, h = xywh[:,0], xywh[:,1], xywh[:,2], xywh[:,3]
     x1 = x_c - w/2; y1 = y_c - h/2
     x2 = x_c + w/2; y2 = y_c + h/2
-
     boxes_xyxy = np.stack([x1, y1, x2, y2], axis=1)
-    # Clip
+
+    # (Opcional) filtrar cajas muy pequeñas
+    min_area = (img_size * img_size) * float(min_box_frac)  # p.ej. 0.2% del área
+    areas = (w * h)
+    big = areas >= min_area
+    if not np.any(big):
+        return (np.empty((0,4), np.float32),
+                np.empty((0,), np.float32),
+                np.empty((0,), np.int32))
+    boxes_xyxy, scores, cls_ids = boxes_xyxy[big], scores[big], cls_ids[big]
+
+    # Clip y NMS (class-agnostic)
     boxes_xyxy[:, [0,2]] = np.clip(boxes_xyxy[:, [0,2]], 0, img_size-1)
     boxes_xyxy[:, [1,3]] = np.clip(boxes_xyxy[:, [1,3]], 0, img_size-1)
 
-    # NMS (OpenCV)
     boxes_xywh = boxes_xyxy.copy()
     boxes_xywh[:,2:4] = boxes_xywh[:,2:4] - boxes_xywh[:,0:2]
     boxes_cv = boxes_xywh.astype(np.int32).tolist()
     scores_cv = scores.astype(float).tolist()
 
-    # Limita top-K para acelerar NMS si hay muchas
     if len(scores_cv) > nms_topk:
         top_idx = np.argsort(-scores)[:nms_topk]
         boxes_cv = [boxes_cv[i] for i in top_idx]
         scores_cv = [scores_cv[i] for i in top_idx]
-        boxes_xyxy = boxes_xyxy[top_idx]
-        scores = scores[top_idx]
-        cls_ids = cls_ids[top_idx]
+        boxes_xyxy = boxes_xyxy[top_idx]; scores = scores[top_idx]; cls_ids = cls_ids[top_idx]
 
-    idxs = cv2.dnn.NMSBoxes(boxes_cv, scores_cv, max(1e-6, conf_threshold*0.5), iou_threshold)
-    if isinstance(idxs, np.ndarray):
-        idxs = idxs.flatten().tolist()
-    elif isinstance(idxs, (list, tuple)) and len(idxs) and isinstance(idxs[0], (list, tuple)):
-        idxs = [i[0] for i in idxs]
-    if not idxs:
-        return (np.empty((0,4), np.float32),
-                np.empty((0,), np.float32),
-                np.empty((0,), np.int32))
-
-    return boxes_xyxy[idxs], scores[idxs], cls_ids[idxs]
+    idxs = cv2.dnn.NMSBoxes(boxes_cv, scores_cv, conf_threshold, iou_threshold)
+    ...
 
 
 if __name__ == '__main__':
