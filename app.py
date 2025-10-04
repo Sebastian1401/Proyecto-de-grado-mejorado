@@ -5,20 +5,26 @@ monkey.patch_all()
 import os
 from flask import Flask, render_template, Response, request, send_file, jsonify, send_from_directory
 import cv2
-import torch
 from datetime import datetime
 import zipfile
 import io
 import numpy as np
+from utils.rknn_infer import RknnModel
 from flask import jsonify
 from generar_pdf import generar_pdf
 from historial_handler import obtener_datos_pacientes
 
+
 app = Flask(__name__)
 
-# Cargar el modelo YOLOv5
-model = torch.hub.load('ultralytics/yolov5', 'custom', path='weights/model1.pt', trust_repo=True)
-model.eval()
+# Cargar el modelo RKNN
+RKNN_IMG_SIZE = 640
+rknn_model = RknnModel(
+    model_path='weights/model1.rknn',
+    yaml_path='data/data.yaml',
+    img_size=RKNN_IMG_SIZE
+)
+
 
 # Variable global para almacenar el último frame
 current_frame = None
@@ -37,51 +43,52 @@ def generate_camera():
 
         # Procesar el frame solo si las predicciones están habilitadas
         if predictions_enabled:
-            # Convertir el frame a BGR y hacer predicción
-            frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-            results = model(frame_bgr)
+            H, W = frame.shape[:2]
 
-            # Obtener las detecciones
-            detections = results.pred[0]
+            # RKNN: el wrapper espera RGB; internamente reescala a 640
+            img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            dets = rknn_model.predict(img_rgb)  # [{'class_id','class_name','confidence','bbox_xyxy'}] en 640x640
 
-            # Imprime cuántas detecciones crudas encontró el modelo
-            if len(detections) > 0:
-                print(f"DEBUG: Modelo encontró {len(detections)} objetos ANTES del filtro de confianza.")
+            # Reescalar cajas a la resolución original
+            sx, sy = W / float(RKNN_IMG_SIZE), H / float(RKNN_IMG_SIZE)
 
-                for *xyxy, conf, cls in detections:
-                    if conf > 0.1:
-                        # --- NUEVA LÓGICA DE CLASIFICACIÓN ---
-                        class_id = int(cls)
-                        class_name = model.names[class_id] # Obtiene el nombre real (ej: 'BCC')
-                    
+            if len(dets) > 0:
+                print(f"DEBUG: Modelo RKNN encontró {len(dets)} objetos ANTES del filtro de confianza.")
 
-                        # Diccionario para agrupar las clases
-                        grupos = {
-                            'MALIGNO/PREMALIGNO': ['AKIEC', 'BCC', 'SCC', 'MEL'],
-                            'BENIGNO': ['BKL', 'DF', 'NV', 'VASC']
-                        }
+            for d in dets:
+                conf = float(d["confidence"])
+                cls_name = d["class_name"]
 
-                        # Determinar la etiqueta final a mostrar
-                        if class_name in grupos['MALIGNO/PREMALIGNO']:
-                            etiqueta_final = "MALIGNO"
-                        elif class_name in grupos['BENIGNO']:
-                            etiqueta_final = "BENIGNO"
-                        
-                        confi = float(conf)
-                        if confi < 0.3:
-                            confi += 0.3
-                        elif confi < 0.4:
-                            confi += 0.2
-                        elif confi < 0.5:
-                            confi += 0.1
+                # Grupos/etiqueta final (misma lógica que tuviste)
+                grupos = {
+                    'MALIGNO/PREMALIGNO': ['AKIEC', 'BCC', 'SCC', 'MEL'],
+                    'BENIGNO': ['BKL', 'DF', 'NV', 'VASC']
+                }
+                if cls_name in grupos['MALIGNO/PREMALIGNO']:
+                    etiqueta_final = "MALIGNO"
+                elif cls_name in grupos['BENIGNO']:
+                    etiqueta_final = "BENIGNO"
+                else:
+                    etiqueta_final = cls_name  # fallback
 
-                        xyxy = [int(i) for i in xyxy]
-                        # Dibujar el recuadro
-                        frame = cv2.rectangle(frame, (xyxy[0], xyxy[1]), (xyxy[2], xyxy[3]), (255, 0, 0), 2)
+                # Ajuste de confianza (conservando tu heurística)
+                if conf < 0.3:
+                    conf += 0.3
+                elif conf < 0.4:
+                    conf += 0.2
+                elif conf < 0.5:
+                    conf += 0.1
 
-                        # Dibujar la nueva etiqueta
-                        texto_a_mostrar = f'{etiqueta_final} {confi:.2f}'
-                        frame = cv2.putText(frame, texto_a_mostrar, (xyxy[2] - 150, xyxy[3] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+                # Dibujar caja y texto
+                x1, y1, x2, y2 = d["bbox_xyxy"]
+                x1, y1, x2, y2 = int(x1 * sx), int(y1 * sy), int(x2 * sx), int(y2 * sy)
+
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
+                texto_a_mostrar = f'{etiqueta_final} {conf:.2f}'
+                cv2.putText(frame, texto_a_mostrar,
+                            (max(0, x2 - 150), max(0, y2 - 10)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+
 
         # Guardar el último frame para capturarlo cuando el usuario lo requiera
         current_frame = frame
