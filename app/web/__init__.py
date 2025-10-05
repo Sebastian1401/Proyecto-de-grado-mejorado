@@ -9,10 +9,11 @@ def create_app() -> Flask:
     )
 
     # Registrar blueprints
-    from . import pages, camera, gallery
+    from . import pages, camera, gallery, settings_bp
 
     app.register_blueprint(pages.bp)
     app.register_blueprint(camera.bp)
     app.register_blueprint(gallery.bp)
+    app.register_blueprint(settings_bp.bp)
 
     return app
