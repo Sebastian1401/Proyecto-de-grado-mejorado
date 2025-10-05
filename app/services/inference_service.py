@@ -29,24 +29,41 @@ class InferenceService:
             "BENIGNO": ["BKL", "DF", "NV", "VASC"],
         }
 
-    def predict(self, frame_bgr: np.ndarray) -> List[Dict]:
-        """Inferencia con thresholds configurables (conf_th, iou_th, min_box_frac)."""
-        from app.services.settings_service import SettingsService  # import local para evitar ciclos
-        t = SettingsService().load()  # lee thresholds (json)
+    def predict(self, frame_bgr: np.ndarray) -> list[dict]:
+        """Inferencia usando thresholds actuales con retrocompatibilidad del adapter."""
+        from app.services.settings_service import SettingsService  # evitar ciclos
+        t = SettingsService().load()
 
-        # preprocesar como siempre (RGB -> NPU)
+        # Prepara RGB
         img_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
-        img_input = self.model.preprocess(img_rgb)
-        outputs = self.model.rknn.inference(inputs=[img_input])
 
-        # post-proceso con perillas actuales
-        dets = self.model.postprocess(
-            outputs,
-            conf_th=float(t.conf_th),
-            iou_th=float(t.iou_th),
-            min_box_frac=float(t.min_box_frac),
-        )
-        return dets
+        # Ruta A: el adapter expone preprocess + rknn + postprocess
+        if hasattr(self.model, "preprocess") and hasattr(self.model, "rknn"):
+            img_input = self.model.preprocess(img_rgb)
+            outputs = self.model.rknn.inference(inputs=[img_input])
+
+            # Intento 1: postprocess con thresholds (posicional)
+            try:
+                return self.model.postprocess(
+                    outputs,
+                    float(t.conf_th),
+                    float(t.iou_th),
+                    float(t.min_box_frac),
+                )
+            except TypeError:
+                # Intento 2: postprocess sin thresholds
+                try:
+                    return self.model.postprocess(outputs)
+                except Exception:
+                    # Último recurso: usar predict del adapter
+                    return self.model.predict(img_rgb)
+
+        # Ruta B: el adapter solo tiene predict(...)
+        try:
+            return self.model.predict(img_rgb)
+        except Exception:
+            return []
+
 
 
     def label_for_class(self, class_name: str) -> str:
