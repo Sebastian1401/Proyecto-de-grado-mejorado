@@ -1,4 +1,5 @@
-from flask import Blueprint, jsonify, request, send_from_directory
+import os
+from flask import Blueprint, jsonify, request, send_file, abort
 from app.services.patient_service import PatientService
 
 bp = Blueprint("gallery", __name__)
@@ -26,7 +27,10 @@ def delete_captura():
         return jsonify({"success": False, "message": str(e)}), 500
 
 # servir archivo (tal como usa camera.html: /resultados_prueba/<cedula>/<filename>)
-@bp.route("/resultados_prueba/<cedula>/<path:filename>")
+@bp.route("/patients/<cedula>/<path:filename>")
 def serve_capture(cedula, filename):
-    base = _patients.storage.base_dir  # "resultados_prueba"
-    return send_from_directory(f"{base}/{cedula}", filename)
+    base = os.path.abspath(_patients.storage.base_dir)
+    filepath = os.path.join(base, cedula, filename)
+    if not os.path.isfile(filepath):
+        abort(404)
+    return send_file(filepath)

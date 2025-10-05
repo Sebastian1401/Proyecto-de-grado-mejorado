@@ -501,6 +501,7 @@
     <script>
         $(document).ready(function () {
             const cedula = '{{ cedula }}';
+            const captureUrlTpl = "{{ url_for('gallery.serve_capture', cedula='__CED__', filename='__FILE__') }}";
 
             // --- LÓGICA DE LA GALERÍA ---
             const galleryPanel = $('#galleryPanel');
@@ -508,7 +509,9 @@
 
             // Función para añadir una miniatura a la galería
             function addThumbnail(filename) {
-                const thumbnailUrl = `/resultados_prueba/${cedula}/${filename}?t=${new Date().getTime()}`;
+                const thumbnailUrl = captureUrlTpl
+                .replace('__CED__', cedula)
+                .replace('__FILE__', filename) + `?t=${Date.now()}`;
                 const item = $(`
                 <div class="thumbnail-item" data-filename="${filename}">
                     <img src="${thumbnailUrl}" alt="Captura">
@@ -534,7 +537,9 @@
                 let imagesLoaded = 0;
                 
                 files.forEach(filename => {
-                    const thumbnailUrl = `/resultados_prueba/${cedula}/${filename}?t=${new Date().getTime()}`;
+                    const thumbnailUrl = captureUrlTpl
+                .replace('__CED__', cedula)
+                .replace('__FILE__', filename) + `?t=${Date.now()}`;
                     const item = $(`
                         <div class="thumbnail-item" data-filename="${filename}">
                             <img src="${thumbnailUrl}" alt="Captura">
