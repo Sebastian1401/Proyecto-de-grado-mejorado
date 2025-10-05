@@ -4,7 +4,7 @@
 import cv2
 import numpy as np
 from typing import List, Dict
-from app.adapters.rknn_infer import RknnModel
+from app.adapters.rknn_adapter import RknnModel
 from app.config import settings
 
 
