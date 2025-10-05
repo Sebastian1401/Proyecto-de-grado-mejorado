@@ -1,0 +1,1 @@
+"""Blueprint: cámara/stream/predicción."""

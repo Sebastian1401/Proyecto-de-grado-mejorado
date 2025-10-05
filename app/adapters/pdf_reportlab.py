@@ -1,0 +1,1 @@
+"""Adapter (Port impl): ReportLab para PDF."""

@@ -1,0 +1,1 @@
+"""Config: rutas base, defaults, etc. (se llena luego)."""

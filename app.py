@@ -9,7 +9,10 @@ from datetime import datetime
 import zipfile
 import io
 import numpy as np
-from utils.rknn_infer import RknnModel
+from app.services.inference import RknnModel
+from app.services.pdf_service import generar_pdf
+from app.services.history_service import obtener_datos_pacientes
+from app.services.rknn_infer import RknnModel
 from flask import jsonify
 from generar_pdf import generar_pdf
 from historial_handler import obtener_datos_pacientes

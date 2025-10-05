@@ -1,0 +1,1 @@
+"""Blueprint: galería/listado/borrado de capturas."""

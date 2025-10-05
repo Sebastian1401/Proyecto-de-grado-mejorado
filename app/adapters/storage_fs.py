@@ -1,0 +1,1 @@
+"""Adapter (Port impl): filesystem (imagenes/json)."""

@@ -1,0 +1,1 @@
+"""Service: generación de PDF."""
