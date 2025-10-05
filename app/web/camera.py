@@ -16,6 +16,9 @@ bp = Blueprint("camera", __name__)
 _camera = None
 _predictions_enabled = False
 _current_frame = None
+_last_boxes = []
+_last_ts = 0.0
+HOLD_MS = 250
 
 # Servicio de inferencia (usa RKNN adapter)
 _infer = InferenceService()
@@ -65,10 +68,19 @@ def _stream_generator():
 
         if _predictions_enabled:
             dets = _infer.predict(frame)
-            if len(dets) > 0:
-                # (opcional) log corto
-                pass
-            frame = _draw_detections(frame, dets, img_size=_infer.img_size)
+
+            now = time.time() * 1000.0
+            global _last_boxes, _last_ts
+            if len(dets) == 0 and (now - _last_ts) < HOLD_MS:
+                dets_to_draw = _last_boxes
+            else:
+                dets_to_draw = dets
+                if len(dets) > 0:
+                    _last_boxes = dets
+                    _last_ts = now
+
+            frame = _draw_detections(frame, dets_to_draw, img_size=_infer.img_size)
+
 
         _current_frame = frame
 

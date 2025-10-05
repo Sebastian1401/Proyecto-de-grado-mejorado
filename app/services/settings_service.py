@@ -6,9 +6,10 @@ SETTINGS_FILE = os.environ.get("THRESHOLDS_JSON", "thresholds.json")
 
 @dataclass
 class Thresholds:
-    conf_th: float = 0.60
-    iou_th:  float = 0.30
+    conf_th: float = 0.30
+    iou_th:  float = 0.50
     min_box_frac: float = 0.003
+
 
 class SettingsService:
     def __init__(self, path: str | None = None) -> None:

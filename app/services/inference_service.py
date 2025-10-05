@@ -30,10 +30,24 @@ class InferenceService:
         }
 
     def predict(self, frame_bgr: np.ndarray) -> List[Dict]:
-        """Devuelve detecciones normalizadas (en coords 640x640) usando el adapter RKNN."""
+        """Inferencia con thresholds configurables (conf_th, iou_th, min_box_frac)."""
+        from app.services.settings_service import SettingsService  # import local para evitar ciclos
+        t = SettingsService().load()  # lee thresholds (json)
+
+        # preprocesar como siempre (RGB -> NPU)
         img_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
-        dets = self.model.predict(img_rgb)  # [{class_id,name,confidence,bbox_xyxy}]
+        img_input = self.model.preprocess(img_rgb)
+        outputs = self.model.rknn.inference(inputs=[img_input])
+
+        # post-proceso con perillas actuales
+        dets = self.model.postprocess(
+            outputs,
+            conf_th=float(t.conf_th),
+            iou_th=float(t.iou_th),
+            min_box_frac=float(t.min_box_frac),
+        )
         return dets
+
 
     def label_for_class(self, class_name: str) -> str:
         if class_name in self.grupos["MALIGNO/PREMALIGNO"]:
