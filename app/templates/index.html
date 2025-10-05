@@ -303,12 +303,12 @@
             <p class="subtitle">Complete la información del paciente para continuar</p>
         </div>
 
-        <a href="{{ url_for('historial') }}" class="history-button">
+        <a href="{{ url_for('pages.historial') }}" class="history-button">
             <i class="fas fa-history"></i>
             <span>Historial</span>
         </a>
         
-        <form action="/start_stream" method="POST">
+        <form action="{{ url_for('pages.start_stream') }}" method="POST">
             <div class="form-group">
                 <i class="fas fa-user"></i>
                 <input type="text" name="nombre" placeholder="Nombre completo del paciente" required>

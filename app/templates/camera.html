@@ -433,7 +433,7 @@
 
         <div class="video-container">
             <div class="status-indicator"></div>
-            <img id="video-frame" src="{{ url_for('video_feed') }}" alt="Transmisión en vivo de la cámara" width="735"
+            <img id="video-frame" rc="{{ url_for('camera.video_feed') }}" alt="Transmisión en vivo de la cámara" width="735"
                 height="480">
         </div>
 
@@ -484,7 +484,7 @@
                         class="fas fa-camera"></i><span>Capturar Imagen</span></button>
                 <button type="button" id="galleryButton" class="action-btn"><i class="fas fa-images"></i><span>Ver
                         Galería</span></button>
-                <a href="{{ url_for('download_data', cedula=cedula) }}" class="action-btn"><i
+                <a href="{{ url_for('pages.download_data', cedula=cedula) }}" class="action-btn"><i
                         class="fas fa-download"></i><span>Descargar Datos</span></a>
                 <button type="button" id="backButton" class="action-btn secondary"><i
                         class="fas fa-arrow-left"></i><span>Regresar</span></button>
@@ -612,7 +612,7 @@
                     formData.append('image', blob, 'captura.jpg');
 
                     $.ajax({
-                        url: "{{ url_for('capture') }}",
+                        url: "{{ url_for('camera.capture') }}",
                         type: 'POST',
                         data: formData,
                         processData: false,
@@ -636,11 +636,11 @@
 
             // --- OTRAS FUNCIONES ---
             $('#backButton').click(function () {
-                window.location.href = "{{ url_for('index') }}";
+                window.location.href = "{{ url_for('pages.index') }}";
             });
 
             $('#predictionSwitch').change(function () {
-                $.post("{{ url_for('toggle_predictions') }}", { enabled: this.checked });
+                $.post("{{ url_for('camera.toggle_predictions') }}", { enabled: this.checked });
             });
 
             // === Perillas RKNN (front) ===
