@@ -1,4 +1,5 @@
-# app/config/settings.py
+APP_VERSION = "2.0.0"
+
 import os
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
