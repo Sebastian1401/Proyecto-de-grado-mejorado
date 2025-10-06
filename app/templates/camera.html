@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluación Médica - {{ cedula }}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/camera.css') }}">
+    <script>
+        window.__APP__ = {
+            cedula: "{{ cedula }}",
+            thresholdsGet: "{{ url_for('settings.get_thresholds') }}",
+            thresholdsPost: "{{ url_for('settings.set_thresholds') }}",
+            thresholdsReset: "{{ url_for('settings.reset_thresholds') }}",
+            getCapturas: "{{ url_for('gallery.get_capturas', cedula=cedula) }}",
+            capturaUrlTpl: "{{ url_for('gallery.serve_capture', cedula='__CED__', filename='__FILE__') }}",
+            togglePred: "{{ url_for('camera.toggle_predictions') }}",
+            captureUrl: "{{ url_for('camera.capture') }}",
+            backUrl: "{{ url_for('pages.index') }}",
+            downloadUrl: "{{ url_for('pages.download_data', cedula=cedula) }}"
+        };
+    </script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body>
+    <div class="content-wrapper">
+        <div class="header">
+            <h1><i class="fas fa-video" style="margin-right: 10px;"></i>Evaluación Médica</h1>
+            <div class="patient-info">
+                <i class="fas fa-id-badge"></i>
+                <span>Paciente - Cédula: {{ cedula }}</span>
+            </div>
+        </div>
+
+        <div class="video-container">
+            <div class="status-indicator"></div>
+            <img id="video-frame" src="{{ url_for('camera.video_feed') }}" alt="Transmisión en vivo de la cámara" width="735" height="480">
+        </div>
+
+        <div class="controls-section" style="margin-top: 20px;">
+            <div class="prediction-toggle">
+                <div class="toggle-label">
+                    <i class="fas fa-brain"></i>
+                    <span>Predicción de IA</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="predictionSwitch" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- === Perillas RKNN === -->
+            <div id="rknn-knobs" style="width:100%; display:flex; flex-direction:column; gap:16px;">
+                <div style="font-weight:600; color:#2c3e50; text-align:center;">Ajustes de detección</div>
+
+                <label style="display:flex; align-items:center; gap:10px; justify-content:space-between;">
+                    <span style="min-width:160px;">Confianza (conf_th)</span>
+                    <input id="conf_th" type="range" min="0" max="1" step="0.01" value="0.60" style="flex:1;">
+                    <span id="conf_th_val" style="width:56px; text-align:right;">0.60</span>
+                </label>
+
+                <label style="display:flex; align-items:center; gap:10px; justify-content:space-between;">
+                    <span style="min-width:160px;">IoU NMS (iou_th)</span>
+                    <input id="iou_th" type="range" min="0" max="1" step="0.01" value="0.30" style="flex:1;">
+                    <span id="iou_th_val" style="width:56px; text-align:right;">0.30</span>
+                </label>
+
+                <label style="display:flex; align-items:center; gap:10px; justify-content:space-between;">
+                    <span style="min-width:160px;">Tamaño mínimo caja</span>
+                    <input id="min_box_frac" type="range" min="0.001" max="0.02" step="0.001" value="0.003" style="flex:1;">
+                    <span id="min_box_frac_val" style="width:56px; text-align:right;">0.003</span>
+                </label>
+
+                <div class="button-group" style="margin-top:4px;">
+                    <button type="button" id="resetKnobs" class="action-btn secondary">
+                    <i class="fas fa-rotate-left"></i><span>Restaurar</span>
+                    </button>
+                </div>
+            </div>
+            <!-- === /Perillas RKNN === -->
+
+            <div class="button-group">
+                <button type="button" id="captureButton" class="action-btn success"><i
+                        class="fas fa-camera"></i><span>Capturar Imagen</span></button>
+                <button type="button" id="galleryButton" class="action-btn"><i class="fas fa-images"></i><span>Ver
+                        Galería</span></button>
+                <a href="{{ url_for('pages.download_data', cedula=cedula) }}" class="action-btn"><i
+                        class="fas fa-download"></i><span>Descargar Datos</span></a>
+                <button type="button" id="backButton" class="action-btn secondary"><i
+                        class="fas fa-arrow-left"></i><span>Regresar</span></button>
+            </div>
+        </div>
+    </div>
+    <div id="galleryPanel" class="gallery-panel">
+        <h2 class="gallery-header">Capturas</h2>
+        <div id="galleryImages" class="gallery-images">
+        </div>
+    </div>
+
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <script defer src="{{ url_for('static', filename='js/camera.js') }}"></script>
+
+</body>
+
+</html>

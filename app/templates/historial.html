@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Pacientes</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/historial.css') }}">
+</head>
+<script src="{{ url_for('static', filename='js/historial.js') }}"></script>
+<body>
+
+    <div class="container">
+        <h1><i class="fas fa-history"></i> Historial de Pacientes</h1>
+        
+        <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Buscar por nombre o cédula...">
+        </div>
+
+        <table class="patient-table" id="patientTable">
+            <thead>
+                <tr>
+                    <th><center>Nombre</center></th>
+                    <th><center>Edad</center></th>
+                    <th><center>Cédula</center></th>
+                    <th><center>Antecedentes</center></th>
+                    <th><center>Acciones</center></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for paciente in pacientes %}
+                <tr>
+                    <td><center>{{ paciente.get('nombre', 'Dato no disponible') }}</center></td>
+                    <td><center>{{ paciente.edad }} </center></td>
+                    <td><center>{{ paciente.cedula }}</center></td>
+                    <td><center>{{ paciente.antecedentes }}</center></td>
+                    <td>
+                        <a href="{{ url_for('pages.download_data', cedula=paciente.cedula) }}" class="btn">
+                            <i class="fas fa-download"></i> Descargar ZIP
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="text-align: center; padding: 20px;">No se encontraron pruebas guardadas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <a href="{{ url_for('pages.index') }}" class="btn btn-back">
+            <i class="fas fa-arrow-left"></i> Volver al Inicio
+        </a>
+    </div>
+</body>
+</html>
