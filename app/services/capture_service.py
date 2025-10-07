@@ -1,1 +1,0 @@
-"""Service: captura/almacenamiento de imágenes."""
