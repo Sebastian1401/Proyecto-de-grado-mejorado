@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: self-hosted, Linux, ARM64, orange, orangepi, rkn
     steps:
       - name: Checkout (for context/logs)
         uses: actions/checkout@v4
