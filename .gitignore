@@ -16,3 +16,6 @@ __pycache__/
 
 #carpeta de resultados de pruebas
 /resultados_prueba/
+/var/
+/runs_npu/
+/local/
