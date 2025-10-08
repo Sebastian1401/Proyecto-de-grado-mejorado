@@ -1,1 +1,0 @@
-"""Domain model: Settings (conf_th, iou_th, min_box_frac)."""
