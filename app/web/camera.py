@@ -9,6 +9,7 @@ from datetime import datetime
 from flask import Blueprint, Response, request, jsonify
 from app.services.inference_service import InferenceService
 from app.services.patient_service import PatientService
+from app.services.settings_service import THRESHOLDS_CACHE
 _patients = PatientService()
 
 # Globals controlados por este módulo (estado de cámara/stream)
@@ -62,12 +63,12 @@ def _stream_generator():
     while True:
         ok, frame = _camera.read()
         if not ok:
-            # Evita tight loop si la cámara cae
             time.sleep(0.05)
             continue
 
         if _predictions_enabled:
-            dets = _infer.predict(frame)
+            thr, _ver = THRESHOLDS_CACHE.snapshot()
+            dets = _infer.predict(frame, thr)
 
             now = time.time() * 1000.0
             global _last_boxes, _last_ts
@@ -81,19 +82,15 @@ def _stream_generator():
 
             frame = _draw_detections(frame, dets_to_draw, img_size=_infer.img_size)
 
-
         _current_frame = frame
 
-        # Codificar a JPEG y renderear chunk
         ret, buffer = cv2.imencode(".jpg", frame)
         if not ret:
-            # Si falla, intenta siguiente
             time.sleep(0.01)
             continue
 
         chunk = b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + buffer.tobytes() + b"\r\n"
         yield chunk
-        # No saturar CPU; si usas gevent, esto puede ser gevent.sleep(0)
         time.sleep(0.01)
 
 
