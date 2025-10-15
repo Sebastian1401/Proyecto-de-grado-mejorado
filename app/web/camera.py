@@ -1,3 +1,4 @@
+# app/web/camera.py
 """Blueprint: cámara/stream/predicción/captura."""
 
 import os

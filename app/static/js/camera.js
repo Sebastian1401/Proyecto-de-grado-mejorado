@@ -7,6 +7,10 @@ $(document).ready(function () {
     const galleryPanel = $('#galleryPanel');
     const galleryImages = $('#galleryImages');
 
+    // --- LOGICA DE LAS PERILLAS ---
+    const $body = $('body');
+    const $knobsPanel = $('#knobsPanel');
+
     // Función para añadir una miniatura a la galería
     function addThumbnail(filename) {
         const thumbnailUrl = captureUrlTpl
@@ -22,11 +26,10 @@ $(document).ready(function () {
     }
 
     // Función para cargar todas las capturas existentes al iniciar
-    // Reemplaza tu función loadCaptures con esta versión mejorada
     function loadCaptures() {
         galleryImages.html('<div class="gallery-loader"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>');
 
-        $.getJSON(window.__APP__.getCapturas, function(files) {
+        $.getJSON(window.__APP__.getCapturas, function (files) {
 
             if (files.length === 0) {
                 galleryImages.html('<p style="text-align:center; color:#888;">No hay capturas.</p>');
@@ -148,8 +151,8 @@ $(document).ready(function () {
     // --- perillas RKNN ---
     // --- thresholds: cargar, guardar y restaurar ---
     function applyThresholds(t) {
-        $('#conf_th').val(t.conf_th);           $('#conf_th_val').text(Number(t.conf_th).toFixed(2));
-        $('#iou_th').val(t.iou_th);             $('#iou_th_val').text(Number(t.iou_th).toFixed(2));
+        $('#conf_th').val(t.conf_th); $('#conf_th_val').text(Number(t.conf_th).toFixed(2));
+        $('#iou_th').val(t.iou_th); $('#iou_th_val').text(Number(t.iou_th).toFixed(2));
         $('#min_box_frac').val(t.min_box_frac); $('#min_box_frac_val').text(Number(t.min_box_frac).toFixed(3));
     }
 
@@ -215,6 +218,34 @@ $(document).ready(function () {
             button.removeClass('loading');
         }
     }
+
+    function setKnobsVisible(visible) {
+        $body.toggleClass('knobs-visible', !!visible);
+        $knobsPanel.attr('aria-hidden', (!visible).toString());
+    }
+
+    // Atajo: Shift+K alterna; Esc cierra
+    document.addEventListener('keydown', (e) => {
+        // Evitar si se escribe en inputs/select/textarea
+        const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+        const typing = tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable;
+
+        // Shift+K (o Shift+k)
+        if (e.shiftKey && (e.key === 'K' || e.key === 'k')) {
+            if (!typing) {
+                setKnobsVisible(!$body.hasClass('knobs-visible'));
+                e.preventDefault();
+            }
+        }
+
+        // Esc cierra
+        if (e.key === 'Escape' && $body.hasClass('knobs-visible')) {
+            setKnobsVisible(false);
+        }
+    });
+
+    // Inicia oculto
+    setKnobsVisible(false);
 
     loadCaptures();
 });
