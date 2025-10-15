@@ -405,7 +405,6 @@ input:checked+.slider:before {
     transform: scale(1.1);
     background: rgba(192, 57, 43, 1.0);
 }
-
 /* --- /ESTILOS PARA LA GALERÍA --- */
 
 /* ===== Panel de perillas (izquierda, compacto) ===== */
@@ -556,7 +555,7 @@ body.knobs-visible .knobs-panel {
 .vslider-wrap{
     height: 240px;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
 }
 
