@@ -149,10 +149,26 @@ $(document).ready(function () {
     });
 
     // --- perillas RKNN ---
+
+    function percentFor($el) {
+        const min = parseFloat($el.attr('min')), max = parseFloat($el.attr('max'));
+        const val = parseFloat($el.val());
+        return Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
+    }
+
+    function updateVisual(selector) {
+        const $el = $(selector);
+        $el.css('--p', percentFor($el));
+    }
+
     function setKnobTexts(t) {
         $('#conf_th_val').text(Number(t.conf_th).toFixed(2));
         $('#iou_th_val').text(Number(t.iou_th).toFixed(2));
         $('#min_box_frac_val').text(Number(t.min_box_frac).toFixed(3));
+
+        updateVisual('#conf_th');
+        updateVisual('#iou_th');
+        updateVisual('#min_box_frac');
     }
 
     function readKnobs() {
@@ -165,6 +181,8 @@ $(document).ready(function () {
 
     let postTimer = null;
     $('#conf_th, #iou_th, #min_box_frac').on('input change', function () {
+        updateVisual('#' + this.id);
+
         const t = readKnobs();
         setKnobTexts(t);
         clearTimeout(postTimer);

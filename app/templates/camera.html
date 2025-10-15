@@ -77,35 +77,40 @@
     </div>
     <!-- === /Panel de Galería === -->
 
-    <!-- === Perillas RKNN (sidebar izquierda) === -->
-    <aside id="knobsPanel" class="knobs-panel" aria-hidden="true">
-        <div class="knobs-header">Ajustes de detección <span class="hotkey">Shift+K</span></div>
-
-        <label class="knob-row">
-            <span class="knob-label">Confianza (conf_th)</span>
-            <input id="conf_th" type="range" min="0" max="1" step="0.01" value="0.60" class="knob-input">
-            <span id="conf_th_val" class="knob-val">0.60</span>
-        </label>
-
-        <label class="knob-row">
-            <span class="knob-label">IoU NMS (iou_th)</span>
-            <input id="iou_th" type="range" min="0" max="1" step="0.01" value="0.30" class="knob-input">
-            <span id="iou_th_val" class="knob-val">0.30</span>
-        </label>
-
-        <label class="knob-row">
-            <span class="knob-label">Tamaño mínimo caja</span>
-            <input id="min_box_frac" type="range" min="0.001" max="0.02" step="0.001" value="0.003" class="knob-input">
-            <span id="min_box_frac_val" class="knob-val">0.003</span>
-        </label>
-
-        <div class="button-group" style="margin-top:8px;">
-            <button type="button" id="resetKnobs" class="action-btn secondary">
-                <i class="fas fa-rotate-left"></i><span>Restaurar</span>
-            </button>
+    <!-- === Perillas RKNN: panel lateral izquierdo === -->
+    <div id="knobsPanel" class="knobs-panel" aria-hidden="true">
+        <div class="kp-header">
+            <span>Ajustes de detección</span>
+            <small>Shift+K</small>
         </div>
-    </aside>
+
+        <div class="knobs-grid">
+            <div class="knob">
+                <input id="conf_th" class="vslider" type="range" min="0" max="1" step="0.01" value="0.60" />
+                <div class="knob-label">Confianza<br />(conf_th)</div>
+                <div class="knob-value"><span id="conf_th_val">0.60</span></div>
+            </div>
+
+            <div class="knob">
+                <input id="iou_th" class="vslider" type="range" min="0" max="1" step="0.01" value="0.30" />
+                <div class="knob-label">IoU NMS<br />(iou_th)</div>
+                <div class="knob-value"><span id="iou_th_val">0.30</span></div>
+            </div>
+
+            <div class="knob">
+                <input id="min_box_frac" class="vslider" type="range" min="0.001" max="0.02" step="0.001"
+                    value="0.003" />
+                <div class="knob-label">Tamaño mínimo<br />caja</div>
+                <div class="knob-value"><span id="min_box_frac_val">0.003</span></div>
+            </div>
+        </div>
+
+        <button type="button" id="resetKnobs" class="action-btn secondary">
+            <i class="fas fa-rotate-left"></i><span>Restaurar</span>
+        </button>
+    </div>
     <!-- === /Perillas RKNN === -->
+
 
     <canvas id="canvas" style="display:none;"></canvas>
 
