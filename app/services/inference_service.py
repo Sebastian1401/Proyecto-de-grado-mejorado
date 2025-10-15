@@ -51,4 +51,6 @@ class InferenceService:
         if conf < 0.3: return conf + 0.5
         if conf < 0.4: return conf + 0.4
         if conf < 0.5: return conf + 0.3
+        if conf < 0.6: return conf + 0.2
+        if conf < 0.7: return conf + 0.1
         return conf
