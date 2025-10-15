@@ -86,21 +86,26 @@
 
         <div class="knobs-grid">
             <div class="knob">
-                <input id="conf_th" class="vslider" type="range" min="0" max="1" step="0.01" value="0.60" />
-                <div class="knob-label">Confianza<br />(conf_th)</div>
+                <div class="vslider-wrap">
+                    <input id="conf_th" class="vslider" type="range" min="0" max="1" step="0.01" value="0.60" />
+                </div>
+                <div class="knob-label">Confianza</div>
                 <div class="knob-value"><span id="conf_th_val">0.60</span></div>
             </div>
 
             <div class="knob">
-                <input id="iou_th" class="vslider" type="range" min="0" max="1" step="0.01" value="0.30" />
-                <div class="knob-label">IoU NMS<br />(iou_th)</div>
+                <div class="vslider-wrap">
+                    <input id="iou_th" class="vslider" type="range" min="0" max="1" step="0.01" value="0.30" />
+                </div>
+                <div class="knob-label">IoU NMS</div>
                 <div class="knob-value"><span id="iou_th_val">0.30</span></div>
             </div>
 
             <div class="knob">
-                <input id="min_box_frac" class="vslider" type="range" min="0.001" max="0.02" step="0.001"
-                    value="0.003" />
-                <div class="knob-label">Tamaño mínimo<br />caja</div>
+                <div class="vslider-wrap">
+                    <input id="min_box_frac" class="vslider" type="range" min="0.001" max="0.02" step="0.001"value="0.003" />
+                </div>                
+                <div class="knob-label">Tamaño mínimo</div>
                 <div class="knob-value"><span id="min_box_frac_val">0.003</span></div>
             </div>
         </div>

@@ -414,14 +414,12 @@ input:checked+.slider:before {
     left: 20px;
     top: 20px;
     width: 420px;
-    /* ancho del panel */
     padding: 20px;
     background: rgba(255, 255, 255, 0.98);
     border-radius: 20px;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
     border: 1px solid rgba(0, 0, 0, 0.06);
     transform: translateX(-120%);
-    /* oculto por defecto */
     transition: transform .35s ease;
     z-index: 110;
 }
@@ -480,26 +478,19 @@ body.knobs-visible .knobs-panel {
 
 /* ===== Slider vertical con “barra de volumen” ===== */
 .vslider {
-    /* base */
     -webkit-appearance: none;
     appearance: none;
     width: 220px;
-    /* se invierte al rotar */
     height: 12px;
     transform: rotate(-90deg);
-    /* vertical portable */
     outline: none;
     border-radius: 8px;
 
     /* colores */
     --fill: #667eea;
-    /* azul lleno */
     --track: #e5e7eb;
-    /* gris pista */
     --p: 60;
-    /* porcentaje, se actualiza via JS */
 
-    /* pista “engrosada” tipo VU-meter */
     background:
         linear-gradient(to right,
             var(--fill) 0%,
@@ -545,7 +536,7 @@ body.knobs-visible .knobs-panel {
 }
 
 .knobs-panel {
-    overflow: hidden;
+    overflow: visible;
 }
 
 .knobs-panel[aria-hidden="true"] {
@@ -563,5 +554,19 @@ body.knobs-visible .knobs-panel {
     min-width: 56px;
     text-align: right;
 }
+
+.vslider-wrap{
+    height: 240px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.vslider{
+    width: 240px;
+    transform: rotate(-90deg);
+    transform-origin: center;
+}
+
 
 /* --- /SIDEBAR PERILLAS (IZQUIERDA) --- */
