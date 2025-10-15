@@ -149,40 +149,62 @@ $(document).ready(function () {
     });
 
     // --- perillas RKNN ---
-    // --- thresholds: cargar, guardar y restaurar ---
+    function setKnobTexts(t) {
+        $('#conf_th_val').text(Number(t.conf_th).toFixed(2));
+        $('#iou_th_val').text(Number(t.iou_th).toFixed(2));
+        $('#min_box_frac_val').text(Number(t.min_box_frac).toFixed(3));
+    }
+
+    function readKnobs() {
+        return {
+            conf_th: parseFloat($('#conf_th').val()),
+            iou_th: parseFloat($('#iou_th').val()),
+            min_box_frac: parseFloat($('#min_box_frac').val())
+        };
+    }
+
+    let postTimer = null;
+    $('#conf_th, #iou_th, #min_box_frac').on('input change', function () {
+        const t = readKnobs();
+        setKnobTexts(t);
+        clearTimeout(postTimer);
+        postTimer = setTimeout(() => {
+            $.ajax({
+                url: window.__APP__.thresholdsPost,
+                type: 'POST',
+                data: JSON.stringify(t),
+                contentType: 'application/json'
+            });
+        }, 120);
+    });
+
     function applyThresholds(t) {
-        $('#conf_th').val(t.conf_th); $('#conf_th_val').text(Number(t.conf_th).toFixed(2));
-        $('#iou_th').val(t.iou_th); $('#iou_th_val').text(Number(t.iou_th).toFixed(2));
-        $('#min_box_frac').val(t.min_box_frac); $('#min_box_frac_val').text(Number(t.min_box_frac).toFixed(3));
+        $('#conf_th').val(t.conf_th);
+        $('#iou_th').val(t.iou_th);
+        $('#min_box_frac').val(t.min_box_frac);
+        setKnobTexts(t);
     }
 
     function loadThresholds() {
         return $.getJSON(window.__APP__.thresholdsGet).done(applyThresholds);
     }
 
-    $('#conf_th, #iou_th, #min_box_frac').on('input change', function () {
-        const payload = {
-            conf_th: parseFloat($('#conf_th').val()),
-            iou_th: parseFloat($('#iou_th').val()),
-            min_box_frac: parseFloat($('#min_box_frac').val())
-        };
-        $.ajax({
-            url: window.__APP__.thresholdsPost,
-            type: 'POST',
-            data: JSON.stringify(payload),
-            contentType: 'application/json'
-        });
-    });
-
     // botón restaurar
     $('#resetKnobs').on('click', function () {
         const $btn = $(this);
+        const $icon = $btn.find('i');
+        const orig = $icon.attr('class');
+
         setButtonLoading($btn, true);
         $.post(window.__APP__.thresholdsReset)
             .done(applyThresholds)
             .fail(() => showNotification('No se pudo restaurar perillas', 'error'))
-            .always(() => setButtonLoading($btn, false));
+            .always(() => {
+                setButtonLoading($btn, false);
+                $icon.attr('class', orig);   // <- restaura el icono
+            });
     });
+
 
     // cargar al entrar a la página
     loadThresholds();

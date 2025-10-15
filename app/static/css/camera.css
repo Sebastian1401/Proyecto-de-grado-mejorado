@@ -467,4 +467,10 @@ body.knobs-visible .knobs-panel {
     width: 56px;
     text-align: right;
 }
+
+.knobs-panel { overflow: hidden; }
+.knobs-panel[aria-hidden="true"] { visibility: hidden; pointer-events: none; }
+body.knobs-visible .knobs-panel { visibility: visible; pointer-events: auto; }
+.knob-val { display:inline-block; min-width:56px; text-align:right; }
+
 /* --- /SIDEBAR PERILLAS (IZQUIERDA) --- */
