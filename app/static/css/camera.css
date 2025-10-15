@@ -462,6 +462,10 @@ body.knobs-visible .knobs-panel {
     color: #2c3e50;
     font-weight: 500;
     line-height: 1.2;
+    min-height: 2.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .knob-value {
@@ -474,7 +478,7 @@ body.knobs-visible .knobs-panel {
     border: 1px solid #e6ebff;
 }
 
-/* ===== Slider vertical con “barra de volumen” ===== */
+/* ===== Slider vertical ===== */
 .vslider {
     -webkit-appearance: none;
     appearance: none;
@@ -498,7 +502,6 @@ body.knobs-visible .knobs-panel {
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, .08);
 }
 
-/* Thumb */
 .vslider::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 18px;
