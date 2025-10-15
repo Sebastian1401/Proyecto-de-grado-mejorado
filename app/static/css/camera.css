@@ -450,7 +450,6 @@ body.knobs-visible .knobs-panel {
     margin: 8px 0 16px;
 }
 
-/* Cada “knob” es una columna estrecha con slider vertical */
 .knob {
     width: 110px;
     display: flex;
@@ -529,7 +528,6 @@ body.knobs-visible .knobs-panel {
     border: 0;
 }
 
-/* Ajuste de botón restaurar dentro del panel */
 #resetKnobs {
     width: 200px;
     margin: 8px auto 0;
@@ -561,12 +559,5 @@ body.knobs-visible .knobs-panel {
     align-items: flex-end;
     justify-content: center;
 }
-
-.vslider{
-    width: 240px;
-    transform: rotate(-90deg);
-    transform-origin: center;
-}
-
 
 /* --- /SIDEBAR PERILLAS (IZQUIERDA) --- */
