@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Evaluación Médica - {{ cedula }}</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/camera.css') }}">
     <script>
         window.__APP__ = {
@@ -37,7 +38,8 @@
 
         <div class="video-container">
             <div class="status-indicator"></div>
-            <img id="video-frame" src="{{ url_for('camera.video_feed') }}" alt="Transmisión en vivo de la cámara" width="735" height="480">
+            <img id="video-frame" src="{{ url_for('camera.video_feed') }}" alt="Transmisión en vivo de la cámara"
+                width="735" height="480">
         </div>
 
         <div class="controls-section" style="margin-top: 20px;">
@@ -47,41 +49,12 @@
                     <span>Predicción de IA</span>
                 </div>
                 <label class="switch">
-                    <input type="checkbox" id="predictionSwitch" checked>
+                    <input type="checkbox" id="predictionSwitch">
                     <span class="slider"></span>
                 </label>
             </div>
 
-            <!-- === Perillas RKNN === -->
-            <div id="rknn-knobs" style="width:100%; display:flex; flex-direction:column; gap:16px;">
-                <div style="font-weight:600; color:#2c3e50; text-align:center;">Ajustes de detección</div>
-
-                <label style="display:flex; align-items:center; gap:10px; justify-content:space-between;">
-                    <span style="min-width:160px;">Confianza (conf_th)</span>
-                    <input id="conf_th" type="range" min="0" max="1" step="0.01" value="0.60" style="flex:1;">
-                    <span id="conf_th_val" style="width:56px; text-align:right;">0.60</span>
-                </label>
-
-                <label style="display:flex; align-items:center; gap:10px; justify-content:space-between;">
-                    <span style="min-width:160px;">IoU NMS (iou_th)</span>
-                    <input id="iou_th" type="range" min="0" max="1" step="0.01" value="0.30" style="flex:1;">
-                    <span id="iou_th_val" style="width:56px; text-align:right;">0.30</span>
-                </label>
-
-                <label style="display:flex; align-items:center; gap:10px; justify-content:space-between;">
-                    <span style="min-width:160px;">Tamaño mínimo caja</span>
-                    <input id="min_box_frac" type="range" min="0.001" max="0.02" step="0.001" value="0.003" style="flex:1;">
-                    <span id="min_box_frac_val" style="width:56px; text-align:right;">0.003</span>
-                </label>
-
-                <div class="button-group" style="margin-top:4px;">
-                    <button type="button" id="resetKnobs" class="action-btn secondary">
-                    <i class="fas fa-rotate-left"></i><span>Restaurar</span>
-                    </button>
-                </div>
-            </div>
-            <!-- === /Perillas RKNN === -->
-
+            <!-- Botones de acción -->
             <div class="button-group">
                 <button type="button" id="captureButton" class="action-btn success"><i
                         class="fas fa-camera"></i><span>Capturar Imagen</span></button>
@@ -92,13 +65,47 @@
                 <button type="button" id="backButton" class="action-btn secondary"><i
                         class="fas fa-arrow-left"></i><span>Regresar</span></button>
             </div>
+            <!-- /Botones de acción -->
         </div>
     </div>
+
+    <!-- === Panel de Galería (sidebar derecha) === -->
     <div id="galleryPanel" class="gallery-panel">
         <h2 class="gallery-header">Capturas</h2>
         <div id="galleryImages" class="gallery-images">
         </div>
     </div>
+    <!-- === /Panel de Galería === -->
+
+    <!-- === Perillas RKNN (sidebar izquierda) === -->
+    <aside id="knobsPanel" class="knobs-panel" aria-hidden="true">
+        <div class="knobs-header">Ajustes de detección <span class="hotkey">Shift+K</span></div>
+
+        <label class="knob-row">
+            <span class="knob-label">Confianza (conf_th)</span>
+            <input id="conf_th" type="range" min="0" max="1" step="0.01" value="0.60" class="knob-input">
+            <span id="conf_th_val" class="knob-val">0.60</span>
+        </label>
+
+        <label class="knob-row">
+            <span class="knob-label">IoU NMS (iou_th)</span>
+            <input id="iou_th" type="range" min="0" max="1" step="0.01" value="0.30" class="knob-input">
+            <span id="iou_th_val" class="knob-val">0.30</span>
+        </label>
+
+        <label class="knob-row">
+            <span class="knob-label">Tamaño mínimo caja</span>
+            <input id="min_box_frac" type="range" min="0.001" max="0.02" step="0.001" value="0.003" class="knob-input">
+            <span id="min_box_frac_val" class="knob-val">0.003</span>
+        </label>
+
+        <div class="button-group" style="margin-top:8px;">
+            <button type="button" id="resetKnobs" class="action-btn secondary">
+                <i class="fas fa-rotate-left"></i><span>Restaurar</span>
+            </button>
+        </div>
+    </aside>
+    <!-- === /Perillas RKNN === -->
 
     <canvas id="canvas" style="display:none;"></canvas>
 
