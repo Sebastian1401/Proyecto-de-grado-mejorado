@@ -180,3 +180,65 @@ Una vez completado, reinicia la placa para que todos los cambios surtan efecto:
 ```bash
 sudo reboot
 ```
+
+### 5. Verificación de la NPU (Paso Crítico)
+
+Antes de desconectar el monitor y el teclado, es fundamental verificar que el sistema operativo ha reconocido la NPU y que los drivers están cargados.
+
+1.  **Verificar el Driver del Kernel**
+
+    El primer paso es comprobar que el kernel ha creado el "dispositivo" de la NPU.
+
+    ```bash
+    ls -l /dev/rknpu
+    ```
+
+    **Resultado esperado:** Deberías ver una salida similar a esta:
+
+    ```bash
+    crw-rw---- 1 root video ... /dev/rknpu
+    ```
+
+    Si recibes un error de "No such file or directory", el driver de la NPU no está activo o la imagen del SO no era la correcta.
+
+2.  **Verificar los Permisos del Usuario**
+
+    Por defecto, el dispositivo `/dev/rknpu` suele pertenecer al grupo `video`. Tu usuario necesita estar en ese grupo para poder usar la NPU.
+
+    ```bash
+    groups
+    ```
+
+    **Resultado esperado:** Deberías ver `video` en la lista de grupos a los que pertenece tu usuario.
+
+    Si no ves `video` en la lista, añádelo con el siguiente comando:
+
+    ```bash
+    sudo usermod -aG video $USER
+    ```
+
+    > **Importante:** Después de ejecutar este comando, debes **cerrar la sesión y volver a iniciarla** (o simplemente reiniciar con `sudo reboot`) para que los cambios de grupo surtan efecto.
+
+3.  **Verificar la Librería de Runtime (RKNN)**
+
+    El software necesita `librknnrt.so` para comunicarse con el hardware.
+
+    ```bash
+    ldconfig -p | grep -i librknnrt
+    ```
+
+    **Resultado esperado:** Deberías ver al menos una línea que muestre la ruta a `librknnrt.so` (ej: `/usr/lib/librknnrt.so`).
+
+4.  **Prueba de Importación en Python**
+
+    Esta es la prueba definitiva para confirmar que tu entorno de Python puede "ver" la NPU.
+
+    ```bash
+    python3 -c "from rknnlite.api import RKNNLite; print('Importación de RKNN Lite OK')"
+    ```
+
+    **Resultado esperado:**
+    ```bash
+    Importación de RKNN Lite OK
+    ```
+    Si este comando falla, pero los pasos 1-3 fueron exitosos, significa que el SO está listo, pero al entorno de Python le falta el paquete `rknn_toolkit_lite2` (que se puede instalar más adelante).
