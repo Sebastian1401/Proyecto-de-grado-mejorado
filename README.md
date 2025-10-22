@@ -242,3 +242,65 @@ Antes de desconectar el monitor y el teclado, es fundamental verificar que el si
     Importación de RKNN Lite OK
     ```
     Si este comando falla, pero los pasos 1-3 fueron exitosos, significa que el SO está listo, pero al entorno de Python le falta el paquete `rknn_toolkit_lite2` (que se puede instalar más adelante).
+
+> Si lo anterior dio los resultados esperados ya podemos desconectar el monitor y el teclado de la Orange Pi.
+
+## 💻 Configuración del Entorno y del Proyecto
+
+A partir de este punto podemos seguir trabajando a través de una conexión SSH usando el hostname que configuramos antes.
+
+### 1. Actualizar el Sistema e Instalar Dependencias Base
+
+Hay que asegurarse de que todo el software del sistema esté actualizado para instalar correctamente las herramientas que necesitaremos para el proyecto.
+
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install python3-pip python3-venv git -y
+```
+
+### 2\. Clonar el Repositorio del Proyecto
+
+Ahora vamos a descargar el código fuente del proyecto.
+
+```bash
+git clone https://github.com/Sebastian1401/Proyecto-de-grado-mejorado.git
+cd Proyecto-de-grado-mejorado
+```
+
+### 3\. Crear y Activar un Entorno Virtual (Recomendado)
+
+Usar un entorno virtual es una práctica fundamental en Python para aislar las dependencias del proyecto y no interferir con las del sistema operativo.
+
+1.  **Crear y activar el entorno** (lo llamaremos `venv`):
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
+    > **Nota:** Verás que el prompt de tu terminal cambia, mostrando `(venv)` al principio. Esto indica que el entorno está activo.
+
+### 4\. Instalar Dependencias del Proyecto
+
+Ahora instalaremos las librerías que la aplicación necesita (Flask, OpenCV, etc.) *dentro* del entorno virtual.
+Ademas tambien instalamos la libreria mas importante ya que es específica del hardware (NPU) y no está en el repositorio estándar de PyPI, si quieres comprobar la version especifica la puedes encontrar en el archivo `requirements.txt`, la ultima linea es la ruta del paquete usado especificamente en este proyecto.
+
+1.  **Instalar las librerías:**
+
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+### 5\. Verificación Final del Entorno
+
+Vamos a confirmar que todas las piezas, especialmente RKNN, están correctamente instaladas *dentro* del entorno virtual.
+
+```bash
+python3 -c "from rknnlite.api import RKNNLite; print('✅ ¡Entorno de NeuroDermascan listo!')"
+```
+
+**Resultado esperado:**
+```
+✅ ¡Entorno de NeuroDermascan listo!
+```
+
+Si ves este mensaje, tu proyecto está instalado y listo para ser ejecutado.
+

@@ -12,3 +12,6 @@ rknn-toolkit-lite2==2.3.2
 tomli==2.0.1
 zope-event==6.0
 zope-interface==8.0.1
+
+# Runtime de RKNN (específico usado en este proyecto)
+./archive/rknn-toolkit/packages/rknn_toolkit_lite2-2.3.2-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
