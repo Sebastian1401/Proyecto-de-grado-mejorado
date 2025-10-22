@@ -18,11 +18,12 @@
   </p>
 
   <p>
-    <img src="https://img.shields.io/badge/Python-3.8%2B-blue?logo=python&logoColor=white" alt="Python">
-    <img src="https://img.shields.io/badge/Flask-2.0-black?logo=flask&logoColor=white" alt="Flask">
-    <img src="https://img.shields.io/badge/OpenCV-4.5-green?logo=opencv&logoColor=white" alt="OpenCV">
-    <img src="https://img.shields.io/badge/Hardware-Orange%20Pi%205-orange" alt="Orange Pi 5">
-    <img src="https://img.shields.io/badge/NPU-RKNN-red" alt="RKNN">
+    <a href="https://github.com/ultralytics/yolov5/actions/workflows/ci-testing.yml"><img src="https://github.com/ultralytics/yolov5/actions/workflows/ci-testing.yml/badge.svg" alt="YOLOv5 CI"></a>
+    <a href="https://www.python.org"><img src="https://img.shields.io/badge/Python-3.8%2B-blue?logo=python&logoColor=white" alt="Python"></a>
+    <a href="https://flask.palletsprojects.com/en/stable"><img src="https://img.shields.io/badge/Flask-6.0-black?logo=flask&logoColor=white" alt="Flask"></a>
+    <a href="https://opencv.org"><img src="https://img.shields.io/badge/OpenCV-4.12-green?logo=opencv&logoColor=white" alt="OpenCV"></a>
+    <a href="http://www.orangepi.org/html/hardWare/computerAndMicrocontrollers/details/Orange-Pi-5.html"><img src="https://img.shields.io/badge/Hardware-Orange%20Pi%205-orange" alt="Orange Pi 5"></a>
+    <a href="http://www.orangepi.org/html/hardWare/computerAndMicrocontrollers/details/Orange-Pi-5.html"><img src="https://img.shields.io/badge/NPU-RKNN-red" alt="RKNN"></a>
   </p>
 
 </div>
@@ -245,6 +246,8 @@ Antes de desconectar el monitor y el teclado, es fundamental verificar que el si
 
 > Si lo anterior dio los resultados esperados ya podemos desconectar el monitor y el teclado de la Orange Pi.
 
+---
+
 ## 💻 Configuración del Entorno y del Proyecto
 
 A partir de este punto podemos seguir trabajando a través de una conexión SSH usando el hostname que configuramos antes.
@@ -304,3 +307,90 @@ python3 -c "from rknnlite.api import RKNNLite; print('✅ ¡Entorno de NeuroDerm
 
 Si ves este mensaje, tu proyecto está instalado y listo para ser ejecutado.
 
+---
+
+
+## 🚀 Creación del Servicio (systemd)
+
+Para que el proyecto se ejecute automáticamente al encender la Orange Pi 5 y se reinicie si falla, lo configuraremos como un servicio de `systemd`.
+
+Esto nos permitirá administrar la aplicación (iniciar, detener, reiniciar) y asegurará que siempre esté en funcionamiento sin necesidad de intervención manual.
+
+### 1. Crear el Archivo de Servicio
+
+Hay que crear un archivo `.service` que le dirá a Linux cómo debe ejecutar nuestra aplicación.
+
+```bash
+sudo nano /etc/systemd/system/neurodermascan.service
+```
+
+### 2\. Contenido del Archivo de Servicio
+
+Pega el siguiente contenido dentro del editor `nano`.
+
+> **⚠️ ¡Atención\!**
+> Debes reemplazar `tu_usuario` con el nombre de usuario real que creaste.
+
+```ini
+[Unit]
+Description=Servicio de Gunicorn para NeuroDermascan
+After=network.target
+
+[Service]
+# Reemplaza 'tu_usuario' con tu nombre de usuario
+User=tu_usuario
+Group=www-data
+
+# Reemplaza 'tu_usuario' con tu nombre de usuario
+WorkingDirectory=/home/tu_usuario/Proyecto-de-grado-mejorado
+
+# Reemplaza 'tu_usuario' con tu nombre de usuario
+ExecStart=/home/tu_usuario/Proyecto-de-grado-mejorado/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 --worker-class gevent app:app
+
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Cuando termines, guarda los cambios (`Ctrl+O`, `Enter`) y cierra el editor (`Ctrl+X`).
+
+### 3\. Cargar y Habilitar el Servicio
+
+Ahora, le diremos a `systemd` que recargue sus archivos y active nuestro nuevo servicio.
+
+1.  **Recargar `systemd`** para que lea el nuevo archivo:
+    ```bash
+    sudo systemctl daemon-reload
+    ```
+2.  **Habilitar el servicio** para que arranque automáticamente en cada inicio:
+    ```bash
+    sudo systemctl enable neurodermascan.service
+    ```
+3.  **Iniciar el servicio** ahora mismo:
+    ```bash
+    sudo systemctl start neurodermascan.service
+    ```
+
+### 4\. Verificar el Estado del Servicio
+
+Puedes comprobar que el servicio está corriendo correctamente en cualquier momento.
+
+```bash
+sudo systemctl status neurodermascan.service
+```
+
+**Resultado esperado:**
+Deberías ver un punto verde y el estado `active (running)`. Si hay un error (`failed`), el `status` te dará pistas de qué salió mal (ej. una ruta incorrecta en el archivo `.service`).
+
+-----
+
+## 🌐 Acceso a la Aplicación
+
+Con el servicio corriendo, ya puedes acceder a la interfaz web de NeuroDermascan desde cualquier dispositivo (computador, tablet o smartphone) que esté conectado a la misma red que la Orange Pi 5.
+
+Simplemente abre tu navegador web y ve a la siguiente dirección:
+
+**`http://neurodermascan.local:5000`**
+
+O reemplaza `neurodermascan` con el nombre de Hostname que configuraste antes.
